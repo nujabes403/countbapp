@@ -40,11 +40,6 @@ class Count extends Component {
   }
 
   setPlus = () => {
-    const walletInstance = caver.klay.accounts.wallet && caver.klay.accounts.wallet[0]
-
-    // Need to integrate wallet for calling contract method.
-    if (!walletInstance) return
-
     this.setState({ settingDirection: 'plus' })
 
     // 3. ** Call contract method (SEND) **
@@ -56,39 +51,36 @@ class Count extends Component {
     //   from: '0x952A8dD075fdc0876d48fC26a389b53331C34585', // PUT YOUR ADDRESS
     //   gas: '200000',
     // })
-    this.countContract.methods.plus().send({
-      from: walletInstance.address,
+    jet.klay.sendTransaction({
+      to: DEPLOYED_ADDRESS,
+      data: this.countContract.methods.plus().encodeABI(),
       gas: '200000',
     })
-      .once('transactionHash', (txHash) => {
-        console.log(`
-          Sending a transaction... (Call contract's function 'plus')
-          txHash: ${txHash}
-          `
-        )
+    .on('transactionHash', (txHash) => {
+      console.log(`
+        Sending a transaction... (Call contract's function 'plus')
+        txHash: ${txHash}
+        `
+      )
+    })
+    .on('receipt', (receipt) => {
+      console.log(`
+        Received receipt! It means your transaction(calling plus function)
+        is in klaytn block(#${receipt.blockNumber})
+      `, receipt)
+      this.setState({
+        settingDirection: null,
+        txHash: receipt.transactionHash,
       })
-      .once('receipt', (receipt) => {
-        console.log(`
-          Received receipt! It means your transaction(calling plus function)
-          is in klaytn block(#${receipt.blockNumber})
-        `, receipt)
-        this.setState({
-          settingDirection: null,
-          txHash: receipt.transactionHash,
-        })
-      })
-      .once('error', (error) => {
-        alert(error.message)
-        this.setState({ settingDirection: null })
-      })
+    })
+    .on('error', (error) => {
+      console.log(error, 'error')
+      alert(error.message)
+      this.setState({ settingDirection: null })
+    })
   }
 
   setMinus = () => {
-    const walletInstance = caver.klay.accounts.wallet && caver.klay.accounts.wallet[0]
-
-    // Need to integrate wallet for calling contract method.
-    if (!walletInstance) return
-
     this.setState({ settingDirection: 'minus' })
 
     // 3. ** Call contract method (SEND) **
@@ -109,31 +101,33 @@ class Count extends Component {
     // ex:) .once('receipt', (data) => {
     //   console.log(data)
     // })
-    this.countContract.methods.minus().send({
-      from: walletInstance.address,
+    jet.klay.sendTransaction({
+      to: DEPLOYED_ADDRESS,
+      data: this.countContract.methods.minus().encodeABI(),
       gas: '200000',
     })
-      .once('transactionHash', (txHash) => {
-        console.log(`
-          Sending a transaction... (Call contract's function 'minus')
-          txHash: ${txHash}
-          `
-        )
+    .on('transactionHash', (txHash) => {
+      console.log(`
+        Sending a transaction... (Call contract's function 'minus')
+        txHash: ${txHash}
+        `
+      )
+    })
+    .on('receipt', (receipt) => {
+      console.log(`
+        Received receipt which means your transaction(calling minus function)
+        is in klaytn block(#${receipt.blockNumber})
+      `, receipt)
+      this.setState({
+        settingDirection: null,
+        txHash: receipt.transactionHash,
       })
-      .once('receipt', (receipt) => {
-        console.log(`
-          Received receipt which means your transaction(calling minus function)
-          is in klaytn block(#${receipt.blockNumber})
-        `, receipt)
-        this.setState({
-          settingDirection: null,
-          txHash: receipt.transactionHash,
-        })
-      })
-      .once('error', (error) => {
-        alert(error.message)
-        this.setState({ settingDirection: null })
-      })
+    })
+    .on('error', (error) => {
+      console.log(error, 'error')
+      alert(error.message)
+      this.setState({ settingDirection: null })
+    })
   }
 
   componentDidMount() {
@@ -146,6 +140,7 @@ class Count extends Component {
 
   render() {
     const { lastParticipant, count, settingDirection, txHash } = this.state
+    
     return (
       <div className="Count">
         {Number(lastParticipant) !== 0 && (
